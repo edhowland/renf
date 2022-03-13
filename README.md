@@ -60,6 +60,8 @@ version control, and if it is, will use the command 'git mv instead of 'mv'
 This behaviour can be overridden 
 
 #### The arewegit function
+The arewegit function  returns true if this folder or subfolder is under
+git version control, else false if it is not.
 
 ```bash
 mkdir foo; cd foo
@@ -126,6 +128,9 @@ and is the number of the highest numbered file. It can be inspected with the las
 lastf
 050
 echo $LASTF
+050
+# You can get a non-zero padded version with:
+echo $INTF
 50
 # Create a new interleaved file after renumbering by 100, leabbing AUTOF set to 10
 renf ,100
@@ -146,7 +151,7 @@ Note: the lastf command formatted $LASTF with the $FMTF format
 Like its BASIC forebears, renf takes optional arguments.
 
 - Range: XXX-YYY
-- Gap value: XX
+- Gap value: ,XX (Note the required ',' before the value)
 
 ### The range
 
@@ -207,6 +212,8 @@ How does listf know what to list?
 This is specified by the $PATF regexp. This regexp can be queried and set
 with the patf function.
 
+Note: This value is actually a Bash glob value, not a proper regular expression.
+
 ```bash
 # What is the current PATF regular expression?
 patf
@@ -246,12 +253,19 @@ echo $FMTF
 
 ## Configuration and Environment variables
 
-renf and friends will get their defaults by looking the following locations:
+renf and friends will get their defaults by looking at the following locations:
+These are sorted with the highest priority first.
 
 1. ./.renf : current directory
 2. Any .renf file in parent folders upto, but not  exceeding the top-level .git
-3. $HOME/.renf : If this exists, is used all child folders
-4. $HOME/.config/renf : This is the expected default
+3. $HOME/.renf : If this exists, it will be  used by all child folders
+4. $HOME/.config/renf/* : This is the expected default
+
+Note: The $HOME/.config/renf folder contains:
+
+- config
+- functions
+- templates
 
 All these config files are merely Bash language source scripts. They only
 set environment variables like AUTOF, FMTF and PATF, .etc
@@ -274,6 +288,7 @@ LASTF : The last number which be added to $AUTOF  for the next invocation of new
   * If unset, will default to the touch command
 - FTPLT : The template function to be used in place of the setting of $TPLTF
 - FMTF : The format string given to the 'printf' function. (default "%03d")
+  * Autoset by the patf function based on the number of digits in the pattern.
 
 
 
@@ -298,7 +313,7 @@ $FTPLT $(nf_name)
 #### Modifying the behaviour of the template function
 
 newf will supply invocation-only variables before invocating the $FTPLT function.
-These variable can be used by this function to create strings in the resulting file that is created.
+These variables can be used by this function to create strings in the resulting file that is created.
 
 
 - NUMF : The number of this file (E.g. 020
@@ -316,11 +331,8 @@ NUMF=020 INTF=20 FILEF=file EXTF=.md PREVF=010 NEXTF=030 FIRSTF=010
 
 
 Note: Obviously, any calls to renf that result in a reordering of the file
-names. Use with caution.
-will invalid any of these links
-
-
-
+names. will invalid any of these links
+Use with caution.
 
 A better strategy is to allow the slide presentation software to both number and
 link up the slides together. E.g. Reveal.js does this for you.
