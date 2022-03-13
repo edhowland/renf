@@ -18,7 +18,7 @@ a gap of 10 between each file name.
 
 ```bash
 source renf.sh
-cd <path/to/dir/w/numbered/md/files>
+cd ./path/to/dir/w/numbered/md/files
 ls *.md
 001_file1.md 002_file.md 003_file.md 004.md
 renf
