@@ -1,7 +1,6 @@
 # renf
 Bash functions to manage numbered files and directories
 
-
 ## Abstract
 
 renf is a Bash source of functions to managed numbered files and folders.
@@ -12,16 +11,19 @@ renf takes as its inspiration from BASIC's 'REN' command. The base idea is when
 you want to add another file between 2 existing files and you do not want
 to mv them manually. For example, say you are creating a slide deck from Markdown
 source files. Files might be named with the following pattern: XXX_title.md where
-XX is a zero padded number betweein 001-999.
+XX is a zero padded number betweein 001-999. You can use renf to renumber with
+a gap of 10 between each file name.
 
 ## Basic usage
 
 ```bash
 source renf.sh
+cd <path/to/dir/w/numbered/md/files>
 ls *.md
 001_file1.md 002_file.md 003_file.md 004.md
 renf
-ls 010_file.md 020_file.md 030_file.md 040_file.md
+ls*.md 
+010_file.md 020_file.md 030_file.md 040_file.md
 ```
 
 ## Changing the gap behaviour of renf
@@ -57,6 +59,26 @@ By default, renf will detect if the current top-level directory is under git
 version control, and if it is, will use the command 'git mv instead of 'mv'
 This behaviour can be overridden 
 
+#### The arewegit function
+
+```bash
+mkdir foo; cd foo
+arewegit
+echo $?
+1
+git init .
+arewegit
+echo $?
+0
+mkdir bar; cd bar
+echo $PWD
+/home/<you/foo/bar
+arewegit
+echo $?
+0
+```
+
+
 ## The listf function
 
 Of course, you can always use a normal 'ls' command in any directory. However,
@@ -73,8 +95,7 @@ listf
 listf 100-200
 100_file.md
 200_file.md
-
-
+```
 
 ## The newf function
 
@@ -223,9 +244,7 @@ echo $FMTF
 ```
  
 
-## Configuration
-
-
+## Configuration and Environment variables
 
 renf and friends will get their defaults by looking the following locations:
 
@@ -237,4 +256,88 @@ renf and friends will get their defaults by looking the following locations:
 All these config files are merely Bash language source scripts. They only
 set environment variables like AUTOF, FMTF and PATF, .etc
 
+The value of the most specific path to .renf can be inspected by:
 
+```bash
+echo $CONFIGF
+/home/<you>/foo/.renf
+```
+
+### Environment variables
+
+- CONFIGF : The path of the most specific .renf file (This is autoset)
+- AUTOF : The numeric gap offset. (default: 10)
+- PATF : The filename pattern. (default: [0-9][0-9][0-9]_*.md
+LASTF : The last number which be added to $AUTOF  for the next invocation of newf
+  * Set initially to the highest numbered file
+- TPLTF : The path of the template file to be copied with the newf command
+  * If unset, will default to the touch command
+- FTPLT : The template function to be used in place of the setting of $TPLTF
+- FMTF : The format string given to the 'printf' function. (default "%03d")
+
+
+
+## Templates
+
+The newf will, bby default, merely touch a new file given some combination
+of $LASTF, $PATF and $AUTOF
+However, if $TPLTF is set to a valid path, then that file will be 'cp' to the new patf filename
+
+### Using the FTPLT function instead
+
+If the $FTPLT variable is set, then that will override any possible setting
+of $TPLF. This must be set to a function that takes the following argument:
+
+```bash
+# Note: nf_name will generate the next expected file name In this case: 020_file.md
+# Inside newf:
+$FTPLT $(nf_name)
+020_file.md
+```
+
+#### Modifying the behaviour of the template function
+
+newf will supply invocation-only variables before invocating the $FTPLT function.
+These variable can be used by this function to create strings in the resulting file that is created.
+
+
+- NUMF : The number of this file (E.g. 020
+- INTF : The raw integer version of $NUMF(E.g. 20)
+- FNF : The file part of the file (E.g. file)
+- EXTF : The extension part of the file
+- PREVF : The previous version of $LASTF. Useful for creating previous/next links. (E.g. 010)
+- NEXTF : The value of $LASTF afternewf would have done its work. Useful to create next link (E.g. 030)
+- FIRSTF : The value of the NUMF of the first file in the list. Useful to create the top link (E.g. 010)
+
+```bash
+# Full  complement of the $FTPLT invocation
+NUMF=020 INTF=20 FILEF=file EXTF=.md PREVF=010 NEXTF=030 FIRSTF=010
+```
+
+
+Note: Obviously, any calls to renf that result in a reordering of the file
+names. Use with caution.
+will invalid any of these links
+
+
+
+
+A better strategy is to allow the slide presentation software to both number and
+link up the slides together. E.g. Reveal.js does this for you.
+
+A plan for the future for this project will include a slide linking function
+
+It is expected that the links will be contained out of band with the content here.
+
+
+
+```bash
+autof 1
+renf
+list --with-links
+001_file.md
+001_links.md
+002_file.md
+002_links.md
+003_file.md
+010_fi
